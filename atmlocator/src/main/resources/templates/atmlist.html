@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#map {
+	height: 500px;
+	width: 100%;
+}
+</style>
+</head>
+	<body>
+	
+		<h1 th:inline="text">Hello Mobiquity [[${#httpServletRequest.remoteUser}]]!</h1>
+		
+		<div> <form th:action="@{/atmlist}" method="get">		
+			<input type="submit" value="HOME" />
+		</form>
+		</BR></div>
+		
+		<form th:action="@{/login}" method="post">		
+			<input type="submit" value="LOGOUT" />
+		</form>
+	
+		<h3>SPRING BOOT : LIST OF ALL ATMS</h3>
+
+	    <form name='f' th:action="@{/atmlist}" th:object="${selectForm}" method='POST'>
+	        <table>
+	            <tr>
+	                <td>Select City:</td>
+	                <td>
+						<select th:field="*{selectedCity}" onchange='if(this.value != 0) { this.form.submit(); }'>
+						  <option 
+						      th:each="dropdownValue: ${session.atmAreas}"
+						      th:value="${dropdownValue}"
+						      th:text="${dropdownValue}" ></option>
+						</select> 
+	                </td>
+	            </tr> 
+	        </table>
+	    </form>	 
+	    
+	    <div id="map"></div>	
+		
+		<script th:inline="javascript">
+	      /*<![CDATA[*/
+		    
+	           var locations = /*[[${session.listAtms}]]*/ null;
+	           var city = /*[[${selectedCity}]]*/ null;
+	       /*]]>*/
+		</script>
+
+		<script> 
+		
+        function initMap() {
+        	//Cennter map in amsterdam
+            var ams = {lat: 52.37, lng: 4.89};
+            var map = new google.maps.Map(document.getElementById('map'), {
+              zoom: 8,
+              center: ams
+            }); 
+            addLocationsToMap(map);
+          }
+        
+        /**
+         * Adds points from 'locations' onto the map as markers.
+         */
+        function addLocationsToMap(map) {  
+        	
+          var objs = JSON.parse(locations);
+          var infowindow = new google.maps.InfoWindow();
+        	
+          for (var i = 0; i < objs.length; i++) {
+          
+            var location = objs[i]; 
+            
+            lat = parseFloat(location.address.geoLocation.lat);
+            lng = parseFloat(location.address.geoLocation.lng);
+            
+            if (city && city == location.address.city) {
+            	
+            	var marker = new google.maps.Marker({
+          		  position: new google.maps.LatLng(lat, lng),
+          		  map: map
+          		});
+          	
+	          	var htmlContent = location.address.housenumber + ' ' + location.address.street + ', ' + location.address.city + ', ' + location.address.postalcode; 
+	          	if (htmlContent) { 
+	             		    google.maps.event.addListener(marker, 'click', (function(marker, i) {
+	             		        return function() {
+	             		            infowindow.setContent(htmlContent);
+	             		            infowindow.open(map, marker);
+	             		        }
+	             		    })(marker, i)); 
+	           	}
+            }
+        
+          }
+        }
+        
+    </script>
+	<script async defer
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbzHyOnrzRyc3sh64QcvDzqghxFnLRAzQ&callback=initMap">
+    </script>
+</body>
+</html>
